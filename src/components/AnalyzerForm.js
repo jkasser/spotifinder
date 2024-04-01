@@ -19,7 +19,7 @@ function PlaylistAnalyzer({ accessToken }) {
         setLoadingUsername(true);
         try {
             // only get the first 100 playlists
-            const response = await fetch(`https://api.spotify.com/v1/users/${enteredUsername}/playlists?limit=100`, {
+            const response = await fetch(`https://api.spotify.com/v1/users/${enteredUsername}/playlists?limit=25`, {
                 method: 'GET',
                 headers: {
                     'Authorization': 'Bearer ' + accessToken
