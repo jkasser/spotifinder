@@ -18,18 +18,29 @@ function PlaylistAnalyzer({ accessToken }) {
         const enteredUsername = event.target.elements.username.value;
         setLoadingUsername(true);
         try {
-            // only get the first 100 playlists
-            const response = await fetch(`https://api.spotify.com/v1/users/${enteredUsername}/playlists?limit=25`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + accessToken
+            let allPlaylists = [];
+            let nextPage = `https://api.spotify.com/v1/users/${enteredUsername}/playlists`;
+
+            while (nextPage) {
+                const response = await fetch(nextPage, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + accessToken
+                    }
+                });
+                const data = await response.json();
+
+                if (data.items.length > 0) {
+                    allPlaylists = [...allPlaylists, ...data.items];
                 }
-            });
-            const data = await response.json();
-            if (data.items.length === 0) {
+
+                nextPage = data.next;
+            }
+
+            if (allPlaylists.length === 0) {
                 setErrorMessage('No playlists found for the entered username.');
             } else {
-                setPlaylists(data.items);
+                setPlaylists(allPlaylists);
                 setErrorMessage('');
             }
         } catch (error) {
