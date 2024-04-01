@@ -12,6 +12,12 @@ function PlaylistAnalyzer({ accessToken }) {
     const [unplayableSongs, setUnplayableSongs] = useState([]);
     const [errorMessage, setErrorMessage] = useState('');
     const [searchedPlaylist, setSearchedPlaylist] = useState(false); // Track if a playlist has been searched
+    const [usernameValue, setUsernameValue] = useState(''); // Track the value of the username field
+    const [isPlaylistSelected, setIsPlaylistSelected] = useState(false); // Track if a playlist is selected
+
+    const handleUsernameChange = (event) => {
+        setUsernameValue(event.target.value); // Update the username value when it changes
+    };
 
     const handleUsernameSubmit = async (event) => {
         event.preventDefault();
@@ -38,7 +44,7 @@ function PlaylistAnalyzer({ accessToken }) {
             }
 
             if (allPlaylists.length === 0) {
-                setErrorMessage('No playlists found for the entered username.');
+                setErrorMessage('No public playlists found for the entered username.');
             } else {
                 setPlaylists(allPlaylists);
                 setErrorMessage('');
@@ -50,6 +56,12 @@ function PlaylistAnalyzer({ accessToken }) {
             setLoadingUsername(false);
         }
     }
+
+    const handlePlaylistChange = (event) => {
+        const selectedPlaylistId = event.target.value;
+        setSelectedPlaylist(selectedPlaylistId);
+        setIsPlaylistSelected(!!selectedPlaylistId); // Update isPlaylistSelected based on whether a playlist is selected
+    };
 
     const handlePlaylistSubmit = async (event) => {
         event.preventDefault();
@@ -96,9 +108,9 @@ function PlaylistAnalyzer({ accessToken }) {
             <Form onSubmit={handleUsernameSubmit}>
                 <Form.Group controlId="formUsername">
                     <Form.Label>Enter Spotify Username</Form.Label>
-                    <Form.Control type="text" name="username" placeholder="Username" />
+                    <Form.Control type="text" name="username" placeholder="Username" value={usernameValue} onChange={handleUsernameChange} />
                 </Form.Group>
-                <Button variant="success" type="submit" disabled={isLoadingUsername || isLoadingPlaylist} className="search-button">
+                <Button variant="success" type="submit" disabled={!usernameValue || isLoadingUsername || isLoadingPlaylist} className="search-button">
                     {isLoadingUsername ? (
                         <>
                             <Spinner
@@ -120,14 +132,14 @@ function PlaylistAnalyzer({ accessToken }) {
                 <Form onSubmit={handlePlaylistSubmit}>
                     <Form.Group controlId="formPlaylist">
                         <Form.Label>Select Playlist</Form.Label>
-                        <Form.Control as="select" onChange={(e) => setSelectedPlaylist(e.target.value)}>
+                        <Form.Control as="select" onChange={handlePlaylistChange}>
                             <option value="">Select Playlist</option>
                             {playlists.map(playlist => (
                                 <option key={playlist.id} value={playlist.id}>{playlist.name}</option>
                             ))}
                         </Form.Control>
                     </Form.Group>
-                    <Button variant="success" type="submit" disabled={isLoadingPlaylist}>
+                    <Button variant="success" type="submit" disabled={!isPlaylistSelected || isLoadingPlaylist}>
                         {isLoadingPlaylist ? (
                             <>
                                 <Spinner
@@ -150,11 +162,11 @@ function PlaylistAnalyzer({ accessToken }) {
                     <Table striped bordered hover size="sm" variant="dark" responsive="sm" style={{ marginTop: '20px', marginBottom: '40px' }}>
                         <thead>
                         <tr>
-                            <th colSpan="2">Unplayable Songs</th>
+                            <th colSpan="2" style={{ fontSize: '2vw', padding: '10px' }}>Unplayable Songs</th>
                         </tr>
                         <tr>
-                            <th style={{ fontSize: '2vw' }}>Artist</th>
-                            <th style={{ fontSize: '2vw' }}>Song</th>
+                            <th style={{ fontSize: '1.8vw', padding: '10px' }}>Artist</th>
+                            <th style={{ fontSize: '1.8vw', padding: '10px' }}>Song</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -162,8 +174,8 @@ function PlaylistAnalyzer({ accessToken }) {
                             if (track && track.name) {
                                 return (
                                     <tr key={index}>
-                                        <td style={{ fontSize: '1.6vw' }}>{track.artists[0].name}</td>
-                                        <td style={{ fontSize: '1.6vw' }}>{track.name}</td>
+                                        <td style={{ fontSize: '1.6vw', padding: '0.5vw' }}>{track.artists[0].name}</td>
+                                        <td style={{ fontSize: '1.6vw', padding: '0.5vw' }}>{track.name}</td>
                                     </tr>
                                 );
                             } else {
