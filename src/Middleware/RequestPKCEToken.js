@@ -1,4 +1,4 @@
-const requestBearerToken = async (code) => {
+const requestKPCEToken = async (code) => {
     const clientId = process.env.REACT_APP_SPOTIFY_CLIENT_ID;
     const clientSecret = process.env.REACT_APP_SPOTIFY_CLIENT_SECRET;
     const redirectUri = process.env.REACT_APP_REDIRECT_URI;
@@ -44,4 +44,4 @@ const requestBearerToken = async (code) => {
     }
 };
 
-export default requestBearerToken;
+export default requestKPCEToken;
