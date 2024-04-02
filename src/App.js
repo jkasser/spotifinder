@@ -7,10 +7,10 @@ function App() {
 
     useEffect(() => {
         const sha256 = async (plain) => {
-            const encoder = new TextEncoder()
-            const data = encoder.encode(plain)
-            return window.crypto.subtle.digest('SHA-256', data)
-        }
+            const encoder = new TextEncoder();
+            const data = encoder.encode(plain);
+            return window.crypto.subtle.digest('SHA-256', data);
+        };
 
         const generateCodeChallenge = (codeVerifier) => {
             const base64encode = (input) => {
@@ -18,9 +18,9 @@ function App() {
                     .replace(/=/g, '')
                     .replace(/\+/g, '-')
                     .replace(/\//g, '_');
-            }
+            };
             return base64encode(sha256(codeVerifier));
-        }
+        };
 
         const handleRedirectCallback = async () => {
             const params = new URLSearchParams(window.location.search);
@@ -28,8 +28,6 @@ function App() {
             const state = params.get('state');
 
             const storedState = localStorage.getItem('spotify_auth_state');
-            console.log(state)
-            console.log(storedState)
 
             if (state === null || state !== storedState) {
                 console.error('State mismatch or missing');
@@ -42,12 +40,11 @@ function App() {
             if (tokenResponse !== null) {
                 const { accessToken, expiresIn } = tokenResponse;
                 setAccessToken(accessToken);
-
                 document.cookie = `accessToken=${accessToken}; max-age=${expiresIn}; path=/;`;
             } else {
                 console.error('Error exchanging authorization code for bearer token');
             }
-        }
+        };
 
         const clientId = process.env.REACT_APP_SPOTIFY_CLIENT_ID;
         const redirectUri = process.env.REACT_APP_REDIRECT_URI;
