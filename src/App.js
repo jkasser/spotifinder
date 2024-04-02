@@ -28,6 +28,8 @@ function App() {
             const state = params.get('state');
 
             const storedState = localStorage.getItem('spotify_auth_state');
+            console.log(state)
+            console.log(storedState)
 
             if (state === null || state !== storedState) {
                 console.error('State mismatch or missing');
