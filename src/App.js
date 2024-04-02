@@ -57,7 +57,7 @@ function App() {
           <img src={logo} className="App-logo" alt="logo" id="spotifyLogo" style={{ width: '500px', height: "auto" }}/>
           <br />
           <p>
-              Find missing spotify songs that are no longer playable in your playlists!
+              Find missing spotify songs that are no longer playable in your public playlists!
           </p>
           <br />
           <PlaylistAnalyzer accessToken={accessToken}/>
