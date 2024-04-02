@@ -141,9 +141,9 @@ function PublicPlaylistAnalyzer({accessToken}) {
                                 role="status"
                                 aria-hidden="true"
                             />
-                            {' Loading...'}
+                            Loading...
                         </>
-                    ) : 'Submit'}
+                    ) : buttonText}
                 </Button>
             </Form>
 
