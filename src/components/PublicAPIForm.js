@@ -1,60 +1,63 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Spinner from 'react-bootstrap/Spinner';
 import { Table } from "react-bootstrap";
 
-function PlaylistAnalyzer({ accessToken }) {
+function PublicPlaylistAnalyzer({accessToken}) {
+    const [isLoadingUsername, setLoadingUsername] = useState(false);
     const [isLoadingPlaylist, setLoadingPlaylist] = useState(false);
     const [playlists, setPlaylists] = useState([]);
     const [selectedPlaylist, setSelectedPlaylist] = useState('');
     const [unplayableSongs, setUnplayableSongs] = useState([]);
     const [errorMessage, setErrorMessage] = useState('');
     const [searchedPlaylist, setSearchedPlaylist] = useState(false); // Track if a playlist has been searched
+    const [usernameValue, setUsernameValue] = useState(''); // Track the value of the username field
     const [isPlaylistSelected, setIsPlaylistSelected] = useState(false); // Track if a playlist is selected
     const [buttonText, setButtonText] = useState('Submit'); // Button text state
 
-    useEffect(() => {
-        // Fetch playlists function
-        const fetchPlaylists = async () => {
-            setLoadingPlaylist(true);
-            try {
-                let allPlaylists = []; // Array to store all playlists
+    const handleUsernameChange = (event) => {
+        setUsernameValue(event.target.value); // Update the username value when it changes
+    };
 
-                let nextPage = 'https://api.spotify.com/v1/me/playlists'; // Initial endpoint
+    const handleUsernameSubmit = async (event) => {
+        event.preventDefault();
+        const enteredUsername = event.target.elements.username.value;
+        setLoadingUsername(true);
+        try {
+            let allPlaylists = [];
+            let nextPage = `https://api.spotify.com/v1/users/${enteredUsername}/playlists`;
 
-                // Loop until all pages are fetched
-                while (nextPage) {
-                    const response = await fetch(nextPage, {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': 'Bearer ' + accessToken
-                        }
-                    });
-
-                    const data = await response.json();
-
-                    if (response.ok) {
-                        allPlaylists = allPlaylists.concat(data.items); // Concatenate fetched playlists to the array
-                        nextPage = data.next; // Update nextPage with the next page URL
-                    } else {
-                        setErrorMessage(data.error.message || 'Failed to fetch playlists.');
-                        return; // Exit the function if there's an error
+            while (nextPage) {
+                const response = await fetchWithRetries(nextPage, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + accessToken
                     }
+                });
+                console.log(response)
+                const data = await response.json();
+
+                if (data.items.length > 0) {
+                    allPlaylists = [...allPlaylists, ...data.items];
                 }
 
-                setPlaylists(allPlaylists); // Set the state with all fetched playlists
-                setErrorMessage('');
-            } catch (error) {
-                console.error('Error fetching playlists:', error);
-                setErrorMessage('Error fetching playlists. Please try again later.');
-            } finally {
-                setLoadingPlaylist(false);
+                nextPage = data.next;
             }
-        };
 
-        fetchPlaylists();
-    }, [accessToken]);
+            if (allPlaylists.length === 0) {
+                setErrorMessage('No public playlists found for the entered username.');
+            } else {
+                setPlaylists(allPlaylists);
+                setErrorMessage('');
+            }
+        } catch (error) {
+            console.error('Error fetching playlists:', error);
+            setErrorMessage('Error fetching playlists. Please try again later.');
+        } finally {
+            setLoadingUsername(false);
+        }
+    }
 
     // Fetch unplayable songs function
     const fetchUnplayableSongs = async () => {
@@ -123,20 +126,13 @@ function PlaylistAnalyzer({ accessToken }) {
 
     return (
         <div>
-            {errorMessage && <p>{errorMessage}</p>}
-
-            <Form onSubmit={handlePlaylistSubmit}>
-                <Form.Group controlId="formPlaylist" style={{ width: '40vw', margin: '0 auto' }}>
-                    <Form.Label>Select A Playlist!</Form.Label>
-                    <Form.Control as="select" onChange={handlePlaylistChange} style={{ width: '100%' }}>
-                        <option value="">Select Playlist</option>
-                        {playlists.map(playlist => (
-                            <option key={playlist.id} value={playlist.id}>{playlist.name}</option>
-                        ))}
-                    </Form.Control>
+            <Form onSubmit={handleUsernameSubmit}>
+                <Form.Group controlId="formUsername" style={{ width: '40vw', margin: '0 auto' }}>
+                    <Form.Label>Enter Spotify Username</Form.Label>
+                    <Form.Control type="text" name="username" placeholder="Username" value={usernameValue} onChange={handleUsernameChange} />
                 </Form.Group>
-                <Button variant="success" type="submit" disabled={!isPlaylistSelected || isLoadingPlaylist}>
-                    {isLoadingPlaylist ? (
+                <Button variant="success" type="submit" disabled={!usernameValue || isLoadingUsername || isLoadingPlaylist} className="search-button">
+                    {isLoadingUsername ? (
                         <>
                             <Spinner
                                 as="span"
@@ -144,15 +140,42 @@ function PlaylistAnalyzer({ accessToken }) {
                                 size="sm"
                                 role="status"
                                 aria-hidden="true"
-                                style={{ marginRight: '5px' }} // Add space between spinner and text
                             />
-                            Loading...
+                            {' Loading...'}
                         </>
-                    ) : (
-                        buttonText
-                    )}
+                    ) : 'Submit'}
                 </Button>
             </Form>
+
+            {errorMessage && <p>{errorMessage}</p>}
+
+            {playlists.length > 0 && (
+                <Form onSubmit={handlePlaylistSubmit}>
+                    <Form.Group controlId="formPlaylist" style={{ width: '40vw', margin: '0 auto' }}>
+                        <Form.Label>Select Playlist</Form.Label>
+                        <Form.Control as="select" onChange={handlePlaylistChange}>
+                            <option value="">Select Playlist</option>
+                            {playlists.map(playlist => (
+                                <option key={playlist.id} value={playlist.id}>{playlist.name}</option>
+                            ))}
+                        </Form.Control>
+                    </Form.Group>
+                    <Button variant="success" type="submit" disabled={!isPlaylistSelected || isLoadingPlaylist}>
+                        {isLoadingPlaylist ? (
+                            <>
+                                <Spinner
+                                    as="span"
+                                    animation="border"
+                                    size="sm"
+                                    role="status"
+                                    aria-hidden="true"
+                                />
+                                {' Loading...'}
+                            </>
+                        ) : 'Submit'}
+                    </Button>
+                </Form>
+            )}
 
             {searchedPlaylist && (
                 <div className="table-container" style={{ width: '80vw', margin: '0 auto' }}>
@@ -195,4 +218,23 @@ function PlaylistAnalyzer({ accessToken }) {
     );
 }
 
-export default PlaylistAnalyzer;
+export default PublicPlaylistAnalyzer;
+
+
+// Helper function to fetch with retries
+const fetchWithRetries = async (url, options, retries = 3) => {
+    try {
+        const response = await fetch(url, options);
+        if (!response.ok && retries > 0) {
+            const retryAfter = response.headers.get('Retry-After');
+            if (retryAfter) {
+                console.log(`Rate limited. Retrying after ${retryAfter} seconds.`);
+                await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+                return fetchWithRetries(url, options, retries - 1);
+            }
+        }
+        return response;
+    } catch (error) {
+        throw new Error('Request failed.');
+    }
+};
