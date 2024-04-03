@@ -149,7 +149,7 @@ function App() {
             <header className="App-header">
                 <img src={logo} className="App-logo" alt="logo" id="spotifyLogo" style={{ width: '500px', height: 'auto' }} />
                 <br />
-                <p>Find missing Spotify songs that are no longer playable in your public playlists!</p>
+                <p>Find missing Spotify songs that are no longer playable in your  {limitedApp ? "public" : ""} playlists!</p>
                 <br />
                 {(authenticated || limitedApp || isLoading) ? null : (
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
