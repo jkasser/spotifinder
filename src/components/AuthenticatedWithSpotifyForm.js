@@ -3,25 +3,23 @@ import PlaylistForm from "./PlaylistForm";
 import UnplayableSongsTable from "./UnplayableSongsTable";
 
 function AuthenticatedPlaylistAnalyzer({ accessToken }) {
+    const [isLoadingPlaylists, setLoadingPlaylists] = useState(true); // State to track loading playlists
     const [isLoadingPlaylist, setLoadingPlaylist] = useState(false);
     const [playlists, setPlaylists] = useState([]);
     const [selectedPlaylist, setSelectedPlaylist] = useState('');
     const [unplayableSongs, setUnplayableSongs] = useState([]);
     const [errorMessage, setErrorMessage] = useState('');
-    const [searchedPlaylist, setSearchedPlaylist] = useState(false); // Track if a playlist has been searched
-    const [isPlaylistSelected, setIsPlaylistSelected] = useState(false); // Track if a playlist is selected
-    const [buttonText, setButtonText] = useState('Submit'); // Button text state
+    const [searchedPlaylist, setSearchedPlaylist] = useState(false);
+    const [isPlaylistSelected, setIsPlaylistSelected] = useState(false);
+    const [buttonText, setButtonText] = useState('Submit');
 
     useEffect(() => {
-        // Fetch playlists function
         const fetchPlaylists = async () => {
-            setLoadingPlaylist(true);
+            setLoadingPlaylists(true); // Set loading state to true when fetching starts
             try {
-                let allPlaylists = []; // Array to store all playlists
+                let allPlaylists = [];
+                let nextPage = 'https://api.spotify.com/v1/me/playlists';
 
-                let nextPage = 'https://api.spotify.com/v1/me/playlists'; // Initial endpoint
-
-                // Loop until all pages are fetched
                 while (nextPage) {
                     const response = await fetch(nextPage, {
                         method: 'GET',
@@ -33,28 +31,27 @@ function AuthenticatedPlaylistAnalyzer({ accessToken }) {
                     const data = await response.json();
 
                     if (response.ok) {
-                        allPlaylists = allPlaylists.concat(data.items); // Concatenate fetched playlists to the array
-                        nextPage = data.next; // Update nextPage with the next page URL
+                        allPlaylists = allPlaylists.concat(data.items);
+                        nextPage = data.next;
                     } else {
                         setErrorMessage(data.error.message || 'Failed to fetch playlists.');
-                        return; // Exit the function if there's an error
+                        return;
                     }
                 }
 
-                setPlaylists(allPlaylists); // Set the state with all fetched playlists
+                setPlaylists(allPlaylists);
                 setErrorMessage('');
             } catch (error) {
                 console.error('Error fetching playlists:', error);
                 setErrorMessage('Error fetching playlists. Please try again later.');
             } finally {
-                setLoadingPlaylist(false);
+                setLoadingPlaylists(false); // Set loading state to false when fetching ends
             }
         };
 
         fetchPlaylists();
     }, [accessToken]);
 
-    // Fetch unplayable songs function
     const fetchUnplayableSongs = async () => {
         setLoadingPlaylist(true);
         try {
@@ -84,10 +81,8 @@ function AuthenticatedPlaylistAnalyzer({ accessToken }) {
             }
 
             setUnplayableSongs(unplayableTracks);
-            // debug console output
-            // console.log(unplayableTracks)
             setErrorMessage('');
-            setSearchedPlaylist(true); // Set to true when a playlist has been searched
+            setSearchedPlaylist(true);
         } catch (error) {
             console.error('Error fetching unplayable songs:', error);
             setErrorMessage('Error fetching unplayable songs. Please try again later.');
@@ -96,39 +91,42 @@ function AuthenticatedPlaylistAnalyzer({ accessToken }) {
         }
     };
 
-    // Handle playlist change function
     const handlePlaylistChange = (event) => {
         const selectedPlaylistId = event.target.value;
         setSelectedPlaylist(selectedPlaylistId);
-        setIsPlaylistSelected(!!selectedPlaylistId); // Update isPlaylistSelected based on whether a playlist is selected
+        setIsPlaylistSelected(!!selectedPlaylistId);
     };
 
-    // Handle playlist submit function
     const handlePlaylistSubmit = async (event) => {
         event.preventDefault();
-        setLoadingPlaylist(true); // Set loading state to true
-        setButtonText(''); // Clear button text
-        await fetchUnplayableSongs(); // Wait for fetching unplayable songs
-        setLoadingPlaylist(false); // Set loading state to false
-        setButtonText('Submit'); // Change button text back to "Submit" after fetching
+        setLoadingPlaylist(true);
+        setButtonText('');
+        await fetchUnplayableSongs();
+        setLoadingPlaylist(false);
+        setButtonText('Submit');
     };
 
     return (
         <div>
-            {errorMessage && <p>{errorMessage}</p>}
-
-            {playlists.length > 0 && (
-                <PlaylistForm
-                    isLoading={isLoadingPlaylist}
-                    buttonText={buttonText}
-                    onSubmit={handlePlaylistSubmit}
-                    playlists={playlists}
-                    selectedPlaylist={selectedPlaylist}
-                    handlePlaylistChange={handlePlaylistChange}
-                    isPlaylistSelected={isPlaylistSelected}
-                />)}
-
-            {searchedPlaylist && <UnplayableSongsTable unplayableSongs={unplayableSongs} />}
+            {isLoadingPlaylists ? ( // Display loading indicator while fetching playlists
+                <div className="loading-indicator">Loading playlists...</div>
+            ) : (
+                <>
+                    {errorMessage && <p>{errorMessage}</p>}
+                    {playlists.length > 0 && (
+                        <PlaylistForm
+                            isLoading={isLoadingPlaylist}
+                            buttonText={buttonText}
+                            onSubmit={handlePlaylistSubmit}
+                            playlists={playlists}
+                            selectedPlaylist={selectedPlaylist}
+                            handlePlaylistChange={handlePlaylistChange}
+                            isPlaylistSelected={isPlaylistSelected}
+                        />
+                    )}
+                    {searchedPlaylist && <UnplayableSongsTable unplayableSongs={unplayableSongs} />}
+                </>
+            )}
         </div>
     );
 }
