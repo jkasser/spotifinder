@@ -38,7 +38,7 @@ function App() {
         }
 
         const redirectUri = process.env.REACT_APP_REDIRECT_URI;
-        const scope = 'user-read-private user-read-email playlist-read-private';
+        const scope = 'user-read-private playlist-read-private';
         const codeVerifier = generateRandomString(128);
         localStorage.setItem('code_verifier', codeVerifier);
         const codeChallenge = await generateCodeChallenge(codeVerifier);
