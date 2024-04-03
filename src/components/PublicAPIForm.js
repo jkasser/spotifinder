@@ -5,6 +5,7 @@ import Spinner from 'react-bootstrap/Spinner';
 import {fetchWithRetries} from "./apiUtils";
 import UnplayableSongsTable from "./UnplayableSongsTable";
 import PlaylistForm from "./PlaylistForm";
+import {fetchUnplayableSongs} from "./apiUtils";
 
 function PublicPlaylistAnalyzer({accessToken}) {
     const [isLoadingUsername, setLoadingUsername] = useState(false);
@@ -61,47 +62,6 @@ function PublicPlaylistAnalyzer({accessToken}) {
         }
     }
 
-    // Fetch unplayable songs function
-    const fetchUnplayableSongs = async () => {
-        setLoadingPlaylist(true);
-        try {
-            const unplayableTracks = [];
-            let nextPage = `https://api.spotify.com/v1/playlists/${selectedPlaylist}/tracks?market=US`;
-
-            while (nextPage) {
-                const response = await fetch(nextPage, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': 'Bearer ' + accessToken
-                    }
-                });
-                const data = await response.json();
-
-                if (data.items) {
-                    const tracks = data.items;
-
-                    tracks.forEach(track => {
-                        if (!track.track.is_playable || (track.track.is_local & track.track.is_playable)) {
-                            unplayableTracks.push(track.track);
-                        }
-                    });
-                }
-
-                nextPage = data.next;
-            }
-
-            setUnplayableSongs(unplayableTracks);
-            // debug console output
-            // console.log(unplayableTracks)
-            setErrorMessage('');
-            setSearchedPlaylist(true); // Set to true when a playlist has been searched
-        } catch (error) {
-            console.error('Error fetching unplayable songs:', error);
-            setErrorMessage('Error fetching unplayable songs. Please try again later.');
-        } finally {
-            setLoadingPlaylist(false);
-        }
-    };
 
     // Handle playlist change function
     const handlePlaylistChange = (event) => {
@@ -113,11 +73,20 @@ function PublicPlaylistAnalyzer({accessToken}) {
     // Handle playlist submit function
     const handlePlaylistSubmit = async (event) => {
         event.preventDefault();
-        setLoadingPlaylist(true); // Set loading state to true
-        setButtonText(''); // Clear button text
-        await fetchUnplayableSongs(); // Wait for fetching unplayable songs
-        setLoadingPlaylist(false); // Set loading state to false
-        setButtonText('Submit'); // Change button text back to "Submit" after fetching
+        const USMarketEndpoint = `https://api.spotify.com/v1/playlists/${selectedPlaylist}/tracks?market=US`;
+        setLoadingPlaylist(true);
+        setButtonText('');
+        try {
+            const unplayableTracks = await fetchUnplayableSongs(USMarketEndpoint, accessToken);
+            setUnplayableSongs(unplayableTracks);
+            setSearchedPlaylist(selectedPlaylist);
+        } catch (error) {
+            console.error('Error fetching unplayable songs:', error);
+            setErrorMessage('Error fetching unplayable songs. Please try again later.');
+        } finally {
+            setLoadingPlaylist(false);
+            setButtonText('Submit');
+        }
     };
 
     return (

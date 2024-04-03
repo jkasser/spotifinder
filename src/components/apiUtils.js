@@ -14,3 +14,44 @@ export const fetchWithRetries = async (url, options, retries = 3) => {
         throw new Error('Request failed.');
     }
 };
+
+
+export const fetchUnplayableSongs = async (endpoint, accessToken) => {
+    try {
+        let unplayableTracks = [];
+        let nextPage = endpoint;
+
+        while (nextPage) {
+            const response = await fetch(nextPage, {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken
+                }
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error.message || 'Failed to fetch unplayable songs.');
+            }
+
+            const data = await response.json();
+
+            if (data.items) {
+                const tracks = data.items;
+
+                tracks.forEach(track => {
+                    if (!track.track.is_playable && !track.track.is_local) {
+                        unplayableTracks.push(track.track);
+                    }
+                });
+            }
+
+            nextPage = data.next;
+        }
+
+        return unplayableTracks;
+    } catch (error) {
+        console.error('Error fetching unplayable songs:', error);
+        throw new Error('Error fetching unplayable songs. Please try again later.');
+    }
+};

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PlaylistForm from "./PlaylistForm";
 import UnplayableSongsTable from "./UnplayableSongsTable";
+import {fetchUnplayableSongs} from "./apiUtils";
 
 function AuthenticatedPlaylistAnalyzer({ accessToken }) {
     const [isLoadingPlaylists, setLoadingPlaylists] = useState(true); // State to track loading playlists
@@ -12,6 +13,31 @@ function AuthenticatedPlaylistAnalyzer({ accessToken }) {
     const [searchedPlaylist, setSearchedPlaylist] = useState(false);
     const [isPlaylistSelected, setIsPlaylistSelected] = useState(false);
     const [buttonText, setButtonText] = useState('Submit');
+    const [userRegion, setUserRegion] = useState('');
+
+    useEffect(() => {
+        const fetchUserRegion = async () => {
+            try {
+                const response = await fetch('https://api.spotify.com/v1/me', {
+                    headers: {
+                        'Authorization': 'Bearer ' + accessToken
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setUserRegion(data.country); // Set the user's region from the API response
+                } else {
+                    setErrorMessage('Failed to fetch user information.');
+                }
+            } catch (error) {
+                console.error('Error fetching user region:', error);
+                setErrorMessage('Error fetching user information. Please try again later.');
+            }
+        };
+
+        fetchUserRegion();
+    }, [accessToken]);
 
     useEffect(() => {
         const fetchPlaylists = async () => {
@@ -29,7 +55,7 @@ function AuthenticatedPlaylistAnalyzer({ accessToken }) {
                     });
 
                     const data = await response.json();
-
+                    console.log(data)
                     if (response.ok) {
                         allPlaylists = allPlaylists.concat(data.items);
                         nextPage = data.next;
@@ -52,44 +78,6 @@ function AuthenticatedPlaylistAnalyzer({ accessToken }) {
         fetchPlaylists();
     }, [accessToken]);
 
-    const fetchUnplayableSongs = async () => {
-        setLoadingPlaylist(true);
-        try {
-            const unplayableTracks = [];
-            let nextPage = `https://api.spotify.com/v1/playlists/${selectedPlaylist}/tracks?market=US`;
-
-            while (nextPage) {
-                const response = await fetch(nextPage, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': 'Bearer ' + accessToken
-                    }
-                });
-                const data = await response.json();
-
-                if (data.items) {
-                    const tracks = data.items;
-
-                    tracks.forEach(track => {
-                        if (!track.track.is_playable || (track.track.is_local & track.track.is_playable)) {
-                            unplayableTracks.push(track.track);
-                        }
-                    });
-                }
-
-                nextPage = data.next;
-            }
-
-            setUnplayableSongs(unplayableTracks);
-            setErrorMessage('');
-            setSearchedPlaylist(true);
-        } catch (error) {
-            console.error('Error fetching unplayable songs:', error);
-            setErrorMessage('Error fetching unplayable songs. Please try again later.');
-        } finally {
-            setLoadingPlaylist(false);
-        }
-    };
 
     const handlePlaylistChange = (event) => {
         const selectedPlaylistId = event.target.value;
@@ -99,12 +87,22 @@ function AuthenticatedPlaylistAnalyzer({ accessToken }) {
 
     const handlePlaylistSubmit = async (event) => {
         event.preventDefault();
+        const userRegionEndpoint = `https://api.spotify.com/v1/playlists/${selectedPlaylist}/tracks?market=${userRegion}`;
         setLoadingPlaylist(true);
         setButtonText('');
-        await fetchUnplayableSongs();
-        setLoadingPlaylist(false);
-        setButtonText('Submit');
+        try {
+            const unplayableTracks = await fetchUnplayableSongs(userRegionEndpoint, accessToken);
+            setUnplayableSongs(unplayableTracks);
+            setSearchedPlaylist(selectedPlaylist);
+        } catch (error) {
+            console.error('Error fetching unplayable songs:', error);
+            setErrorMessage('Error fetching unplayable songs. Please try again later.');
+        } finally {
+            setLoadingPlaylist(false);
+            setButtonText('Submit');
+        }
     };
+
 
     return (
         <div>
@@ -124,7 +122,7 @@ function AuthenticatedPlaylistAnalyzer({ accessToken }) {
                             isPlaylistSelected={isPlaylistSelected}
                         />
                     )}
-                    {searchedPlaylist && <UnplayableSongsTable unplayableSongs={unplayableSongs} />}
+                    {searchedPlaylist && <UnplayableSongsTable unplayableSongs={unplayableSongs} userRegion={userRegion} />}
                 </>
             )}
         </div>
