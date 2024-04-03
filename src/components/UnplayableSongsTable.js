@@ -11,35 +11,34 @@ function UnplayableSongsTable({ unplayableSongs }) {
     }
 
     return (
-        <div className="table-container" style={{ width: '80vw', margin: '0 auto' }}>
-            {unplayableSongs.length > 0 ? (
-                <Table striped bordered hover size="sm" variant="dark" responsive="sm">
-                    <thead>
-                    <tr>
-                        <th colSpan="4" style={{ fontSize: '2vw', padding: '10px' }}>Unplayable Songs</th>
-                    </tr>
-                    <tr>
-                        <th style={{ fontSize: '1.8vw', padding: '10px' }}>Artist</th>
-                        <th style={{ fontSize: '1.8vw', padding: '10px' }}>Song</th>
-                        <th style={{ fontSize: '1.8vw', padding: '10px' }}>Duration</th>
-                        <th style={{ fontSize: '1.8vw', padding: '10px' }}>Reason</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {unplayableSongs.map((track, index) => (
-                        <tr key={index}>
-                            <td style={{ fontSize: '1.6vw', padding: '0.5vw' }}>{track.artists[0]?.name || 'N/A'}</td>
-                            <td style={{ fontSize: '1.6vw', padding: '0.5vw' }}>
-                                <a href={track.external_urls.spotify} target="_blank" rel="noopener noreferrer">
-                                    {track.name || 'N/A'}
-                                </a>
-                            </td>
-                            <td style={{ fontSize: '1.6vw', padding: '0.5vw' }}>{formatDuration(track.duration_ms) || 'N/A'}</td>
-                            <td style={{ fontSize: '1.6vw', padding: '0.5vw' }}>{track.restrictions?.reason ? track.restrictions.reason : 'N/A'}</td>
-                        </tr>
-                    ))}
-                    </tbody>
-                </Table>
+<div className="spotify-playlist">
+  <table>
+    <thead>
+      <tr>
+        <th colSpan="4">Unplayable Songs</th>
+      </tr>
+      <tr>
+        <th>Artist</th>
+        <th>Song</th>
+        <th>Duration</th>
+        <th>Reason</th>
+      </tr>
+    </thead>
+    <tbody>
+      {unplayableSongs.map((track, index) => (
+      <tr key={index}>
+        <td>{track.artists[0]?.name || 'N/A'}</td>
+        <td>
+          <a href={track.external_urls.spotify} target="_blank" rel="noopener noreferrer">
+            {track.name || 'N/A'}
+          </a>
+        </td>
+        <td>{formatDuration(track.duration_ms) || 'N/A'}</td>
+        <td>{track.restrictions?.reason || 'N/A'}</td>
+      </tr>
+      ))}
+    </tbody>
+  </table>
             ) : (
                 <p>No unplayable songs found in this playlist.</p>
             )}

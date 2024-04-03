@@ -36,3 +36,43 @@ select:disabled {
   opacity: 0.5 !important;
   cursor: not-allowed;
 }
+
+
+.spotify-playlist table {
+  width: 100%;
+  background-color: #121212;
+  color: #ffffff;
+  border-collapse: collapse;
+}
+
+.spotify-playlist th,
+.spotify-playlist td {
+  text-align: left;
+  padding: 16px;
+}
+
+.spotify-playlist th {
+  font-size: 16px;
+  border-bottom: 1px solid #282828;
+}
+
+.spotify-playlist td {
+  font-size: 14px;
+}
+
+.spotify-playlist a {
+  color: #1DB954;
+  text-decoration: none;
+}
+
+.spotify-playlist a:hover {
+  text-decoration: underline;
+}
+
+.spotify-playlist thead th {
+  color: #919496;
+}
+
+.spotify-playlist tbody tr:hover {
+  background-color: #282828;
+}
