@@ -139,7 +139,7 @@ function PublicPlaylistAnalyzer({accessToken}) {
                             />
                             Loading...
                         </>
-                    ) : buttonText}
+                    ) : buttonText || "Submit"}
                 </Button>
             </Form>
 
